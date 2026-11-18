@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f5ee">
+  <meta name="description" content="LAN Drop：自部署的设备间文件直传工具。无需登录，无需上传到云端。">
+  <title>LAN Drop · 设备间文件直传</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css?v=security-1">
+  <script src="/config.js?v=security-1"></script>
+  <script src="/boot.js?v=security-1"></script>
+  <script src="/vendor/qrcode.js" defer></script>
+  <script type="module" src="/app.js?v=security-1"></script>
+</head>
+<body>
+  <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v5h16v-5"/></symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 16v5h16v-5"/></symbol>
+    <symbol id="icon-desktop" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></symbol>
+    <symbol id="icon-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4m-3 14h2"/></symbol>
+    <symbol id="icon-tablet" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M11 19h2"/></symbol>
+    <symbol id="icon-file" viewBox="0 0 24 24"><path d="M14 2H5v20h14V7zM14 2v6h5M8 13h8m-8 4h5"/></symbol>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6zM8 12l3 3 5-6"/></symbol>
+    <symbol id="icon-link" viewBox="0 0 24 24"><path d="m10 14 4-4m-6 6-2 2a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m2 10a4 4 0 0 0 6 0l5-5a4 4 0 0 0-6-6l-2 2" transform="translate(2 0) scale(.85 1)"/></symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20 14A9 9 0 0 1 10 3a9 9 0 1 0 10 11Z"/></symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24"><path d="m16 3 5 5L9 20l-6 1 1-6zM13 6l5 5"/></symbol>
+    <symbol id="icon-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 4 3c-1 .5-1 1-1 2m0 3h.01"/></symbol>
+  </svg>
+
+  <header class="site-header shell">
+    <a class="brand" href="/" aria-label="LAN Drop 首页"><span class="brand-mark">LD<span></span></span><span>LAN Drop<span class="brand-caption">DIRECT FILE SHARING</span></span></a>
+    <div class="header-tools">
+      <span id="connection-status" class="connection-status" role="status"><span class="status-dot"></span><span id="connection-label">正在连接</span></span>
+      <button id="theme-button" class="icon-button" aria-label="切换深浅色主题" title="切换主题"><svg class="icon"><use href="#icon-moon"/></svg></button>
+      <button id="help-button" class="icon-button" aria-label="使用帮助" title="使用帮助"><svg class="icon"><use href="#icon-help"/></svg></button>
+    </div>
+  </header>
+
+  <main class="shell main-content">
+    <div id="environment-warning" class="notice" hidden></div>
+    <div id="startup-warning" class="notice" hidden></div>
+    <section class="workspace" aria-labelledby="devices-title">
+      <div class="workspace-toolbar"><span id="mode-label" class="mode-label"><span></span>等待连接</span><span class="workspace-caption">设备之间，直接送达。</span></div>
+      <div class="device-panel">
+        <div class="device-heading"><div class="section-kicker">SEND TO</div><h1 id="devices-title">发送到哪台设备？<span id="peer-count" class="count-badge">0</span></h1><p id="device-description" class="muted">正在连接服务，请稍候。</p></div>
+        <p id="room-connection-hint" class="connection-hint" role="status">等待信令连接。</p>
+        <div class="device-stage">
+          <div id="peers" class="peer-grid"></div>
+          <div id="devices-empty" class="devices-empty"><div class="empty-symbol" aria-hidden="true"><span></span><span></span><span></span><svg class="icon"><use href="#icon-desktop"/></svg></div><h2 id="empty-title">等待另一台设备</h2><p id="empty-description">连接成功后，会自动显示当前可见的设备。</p><span class="empty-hint">电脑 · 手机 · 平板</span></div>
+        </div>
+        <div class="drop-tip"><svg class="icon"><use href="#icon-upload"/></svg><span>点击设备选择文件，或将文件拖到设备卡片上。</span></div>
+        <div class="self-device"><span class="self-icon"><svg class="icon"><use id="self-device-icon" href="#icon-desktop"/></svg></span><div><span class="small-label">这台设备</span><strong id="self-name">我的设备</strong><span id="self-code">尚未连接</span></div><button id="rename-button" class="icon-button" aria-label="修改设备名称" title="修改设备名称"><svg class="icon"><use href="#icon-edit"/></svg></button><span class="live-indicator" hidden><span></span>在线</span></div>
+      </div>
+      <section id="room-panel" class="room-panel" aria-labelledby="room-title" hidden>
+        <div class="room-heading"><svg class="icon"><use href="#icon-link"/></svg><div><h2 id="room-title">连接另一台设备</h2><p class="muted">创建或加入同一个房间，设备才会互相显示。</p></div></div>
+        <div id="room-empty" class="room-empty" hidden><button id="create-room" class="button primary" disabled>创建临时房间<svg class="icon"><use href="#icon-arrow"/></svg></button><span class="room-or">或</span><form id="join-form"><label for="room-input" class="small-label">加入已有房间</label><div class="input-action"><input id="room-input" maxlength="12" placeholder="输入 8 位房间码" autocomplete="off" autocapitalize="characters" spellcheck="false" required><button class="button compact" aria-label="加入房间" type="submit" disabled><svg class="icon"><use href="#icon-arrow"/></svg></button></div></form></div>
+        <div id="room-active" class="room-active" hidden><div class="room-details"><span id="room-kind" class="small-label">当前临时房间</span><div id="room-code" class="room-code"></div><p id="room-note" class="room-note">扫码或发送邀请链接，让另一台设备加入。</p><div class="room-actions"><button id="copy-invite" class="button secondary"><svg class="icon"><use href="#icon-link"/></svg>复制邀请链接</button><button id="leave-room" class="text-button">离开房间</button></div></div><div id="qr-code" class="qr-code" aria-label="扫码加入当前房间"></div></div>
+      </section>
+    </section>
+
+    <section class="transfer-section" aria-labelledby="transfers-title"><div class="panel-heading"><h2 id="transfers-title">传输记录<span class="section-kicker">TRANSFERS</span></h2><button id="clear-history" class="text-button">清空已结束记录</button></div><div id="transfers" class="transfers"><div class="transfer-empty"><svg class="icon"><use href="#icon-file"/></svg><span>选择一台设备，开始第一次分享。</span></div></div></section>
+    <details id="connection-diagnostics" class="connection-diagnostics" hidden><summary>连接诊断</summary><pre id="diagnostics-output">正在加载诊断信息。</pre></details>
+    <section class="about-strip" aria-label="关于 LAN Drop"><p>文件，不必绕远路。</p><div><span><svg class="icon"><use href="#icon-shield"/></svg>设备间加密传输</span><span>无需账号</span><span>无云端存储</span></div><p id="mode-note" class="mode-note">服务器只负责连接协商，不保存你的文件。</p></section>
+  </main>
+  <footer class="site-footer shell"><span>LAN Drop · 自己部署，直接分享。</span><span class="footer-version">SELF-HOSTED / v1.0</span></footer>
+  <input id="file-input" type="file" multiple hidden>
+
+  <dialog id="receive-dialog" class="modal"><div class="modal-heading"><span class="modal-icon"><svg class="icon"><use href="#icon-download"/></svg></span><span class="section-kicker">INCOMING FILES</span></div><h2>有文件向你而来。</h2><p id="receive-description" class="muted"></p><ul id="receive-files" class="receive-files"></ul><p id="receive-limit" class="notice"></p><div class="modal-actions"><button id="reject-transfer" class="button secondary">拒绝</button><button id="accept-memory" class="button primary">接收文件</button></div><button id="accept-disk" class="text-button wide" hidden>接收并直接保存到文件夹 ↗</button><p class="modal-note">只接收你认识的设备发送的文件。请保持网页在前台。</p></dialog>
+  <dialog id="invite-dialog" class="modal"><h2>邀请另一台设备。</h2><p class="muted">当前环境无法自动复制，请手动复制下方链接。</p><input id="invite-link" class="full-input" readonly aria-label="邀请链接"><button class="button primary wide" data-close="invite-dialog">完成</button></dialog>
+  <dialog id="rename-dialog" class="modal"><h2>给这台设备起个名字。</h2><p class="muted">让另一台设备一眼就认出你。</p><form id="rename-form"><label for="name-input" class="small-label">设备名称</label><input id="name-input" class="full-input" maxlength="32" required autocomplete="off"><div class="modal-actions"><button type="button" class="button secondary" data-close="rename-dialog">取消</button><button class="button primary" type="submit">保存名称</button></div></form></dialog>
+  <dialog id="password-dialog" class="modal"><h2>这是一个私人站点。</h2><p id="password-description" class="muted">请输入管理员设置的访问密码。</p><form id="password-form"><label for="password-input" class="small-label">访问密码</label><input id="password-input" class="full-input" type="password" maxlength="256" autocomplete="current-password" required><button class="button primary wide" type="submit">连接 LAN Drop<svg class="icon"><use href="#icon-arrow"/></svg></button></form></dialog>
+  <dialog id="help-dialog" class="modal help-modal"><div class="panel-heading"><h2>如何分享文件</h2><button class="icon-button" data-close="help-dialog" aria-label="关闭帮助"><svg class="icon"><use href="#icon-close"/></svg></button></div><ol class="help-steps"><li><strong>打开同一个网站</strong><p>局域网模式会自动显示同一大厅的设备；房间模式需要先创建或加入同一个房间。</p></li><li><strong>点击目标设备</strong><p>选择要发送的文件，或将文件拖到设备卡片上。</p></li><li><strong>对方确认接收</strong><p>普通接收完成后，点击传输记录中的文件名保存。支持文件夹接收的浏览器可以直接写入磁盘。</p></li></ol><div class="notice">普通接收的文件总大小上限为 256 MB，手机建议更小。请保持双方网页在前台，避免锁屏。</div><p class="muted">局域网模式显示所有有权访问同一大厅的设备，并非扫描 Wi-Fi。公网开放时请设置访问控制。无法直连时，请检查网络隔离、防火墙或 STUN/TURN 配置。</p><p class="modal-note">不支持断点续传；刷新、离开房间或断线后，需要重新发送。只接收可信设备的文件。</p></dialog>
+  <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
+  <noscript><div class="notice shell">LAN Drop 需要启用 JavaScript 才能建立设备连接。</div></noscript>
+</body>
+</html>

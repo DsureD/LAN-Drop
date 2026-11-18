@@ -1,0 +1,19 @@
+services:
+  lan-drop:
+    build: .
+    container_name: lan-drop
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      MODE: ${MODE:-room}
+      DEBUG: ${DEBUG:-false}
+      ACCESS_PASSWORD: ${ACCESS_PASSWORD:-}
+      ALLOW_PASSWORDLESS_LAN: ${ALLOW_PASSWORDLESS_LAN:-false}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+      ICE_SERVERS: ${ICE_SERVERS:-[]}
+      MAX_CLIENTS: ${MAX_CLIENTS:-256}
+      MAX_CONNECTIONS_PER_IP: ${MAX_CONNECTIONS_PER_IP:-16}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      MAX_ROOM_PEERS: ${MAX_ROOM_PEERS:-32}
+      ROOM_IDLE_MINUTES: ${ROOM_IDLE_MINUTES:-30}

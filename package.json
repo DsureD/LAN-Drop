@@ -1,0 +1,13 @@
+{
+  "name": "lan-drop",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-hosted local file sharing with a static frontend and WebRTC",
+  "engines": { "node": ">=22.9.0" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "test": "node --test"
+  },
+  "dependencies": { "ws": "8.23.0", "qrcode-generator": "1.4.4" }
+}
