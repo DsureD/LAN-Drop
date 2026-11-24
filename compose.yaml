@@ -8,6 +8,7 @@ services:
     environment:
       MODE: ${MODE:-room}
       DEBUG: ${DEBUG:-false}
+      MEMORY_LIMIT_MB: ${MEMORY_LIMIT_MB:-512}
       ACCESS_PASSWORD: ${ACCESS_PASSWORD:-}
       ALLOW_PASSWORDLESS_LAN: ${ALLOW_PASSWORDLESS_LAN:-false}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}

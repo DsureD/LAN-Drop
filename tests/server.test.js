@@ -29,7 +29,7 @@ test('real HTTP and WebSocket service serves assets, isolates rooms and rejects 
   const base = `http://127.0.0.1:${port}`;
   const child = spawn(process.execPath, ['server/index.js'], {
     cwd: new URL('../', import.meta.url),
-    env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), MODE: 'room', DEBUG: '', ACCESS_PASSWORD: '', ALLOW_PASSWORDLESS_LAN: 'false', TRUSTED_PROXIES: '', ALLOWED_ORIGINS: '', ICE_SERVERS: '[]', MAX_CLIENTS: '256', MAX_CONNECTIONS_PER_IP: '16', MAX_ROOM_PEERS: '32', ROOM_IDLE_MINUTES: '30' },
+    env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), MODE: 'room', DEBUG: '', MEMORY_LIMIT_MB: '', ACCESS_PASSWORD: '', ALLOW_PASSWORDLESS_LAN: 'false', TRUSTED_PROXIES: '', ALLOWED_ORIGINS: '', ICE_SERVERS: '[]', MAX_CLIENTS: '256', MAX_CONNECTIONS_PER_IP: '16', MAX_ROOM_PEERS: '32', ROOM_IDLE_MINUTES: '30' },
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true
   });
@@ -53,7 +53,7 @@ test('real HTTP and WebSocket service serves assets, isolates rooms and rejects 
   const config = await fetch(`${base}/config.js?v=security-1`);
   assert.equal(config.headers.get('cache-control'), 'no-store');
   assert.match(config.headers.get('content-type'), /javascript/);
-  assert.equal(await config.text(), 'window.LAN_DROP_CONFIG = {"debug":false};');
+  assert.equal(await config.text(), 'window.LAN_DROP_CONFIG = {"debug":false,"memoryLimitBytes":536870912};');
   const configHead = await fetch(`${base}/config.js`, { method: 'HEAD' });
   assert.equal(configHead.status, 200);
   assert.equal(await configHead.text(), '');
@@ -111,11 +111,11 @@ test('real HTTP and WebSocket service serves assets, isolates rooms and rejects 
   assert.equal(rejection, 403);
 });
 
-test('DEBUG=true exposes only the debug flag, not private environment settings', { skip: !websocketModule }, async context => {
+test('public configuration exposes the debug flag and memory budget, not private settings', { skip: !websocketModule }, async context => {
   const port = await allocatePort();
   const child = spawn(process.execPath, ['server/index.js'], {
     cwd: new URL('../', import.meta.url),
-    env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), MODE: 'room', DEBUG: 'true', ACCESS_PASSWORD: 'never-expose-this', ICE_SERVERS: '[]' },
+    env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), MODE: 'room', DEBUG: 'true', MEMORY_LIMIT_MB: '', ACCESS_PASSWORD: 'never-expose-this', ICE_SERVERS: '[]' },
     stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true
   });
   context.after(async () => {
@@ -124,14 +124,38 @@ test('DEBUG=true exposes only the debug flag, not private environment settings',
   let output = '';
   child.stdout.on('data', data => { output += data; });
   await until(() => output.includes('LAN Drop listening'));
-  assert.equal(await (await fetch(`http://127.0.0.1:${port}/config.js`)).text(), 'window.LAN_DROP_CONFIG = {"debug":true};');
+  assert.equal(await (await fetch(`http://127.0.0.1:${port}/config.js`)).text(), 'window.LAN_DROP_CONFIG = {"debug":true,"memoryLimitBytes":536870912};');
+});
+
+test('server publishes configured memory budgets without caching', { skip: !websocketModule }, async context => {
+  for (const limit of [128, 1024]) {
+    const base = await securityService(context, { MEMORY_LIMIT_MB: String(limit) });
+    const config = await fetch(`${base}/config.js`);
+    assert.equal(config.headers.get('cache-control'), 'no-store');
+    assert.equal(await config.text(), `window.LAN_DROP_CONFIG = ${JSON.stringify({ debug: false, memoryLimitBytes: limit * 1024 * 1024 })};`);
+  }
+});
+
+test('server rejects invalid or unsafe memory budgets at startup', { skip: !websocketModule }, async () => {
+  for (const limit of ['0', '-1', '1.5', 'invalid', 'Infinity', '8589934592']) {
+    const child = spawn(process.execPath, ['server/index.js'], {
+      cwd: new URL('../', import.meta.url),
+      env: { ...process.env, MODE: 'room', DEBUG: 'false', ACCESS_PASSWORD: '', ALLOW_PASSWORDLESS_LAN: 'false', MEMORY_LIMIT_MB: limit },
+      stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true
+    });
+    let errors = '';
+    child.stderr.on('data', data => { errors += data; });
+    const [code] = await once(child, 'exit');
+    assert.equal(code, 1);
+    assert.match(errors, /MEMORY_LIMIT_MB must be a positive integer/);
+  }
 });
 
 async function securityService(context, settings = {}) {
   const port = await allocatePort();
   const child = spawn(process.execPath, ['server/index.js'], {
     cwd: new URL('../', import.meta.url),
-    env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), MODE: 'room', DEBUG: 'false', ACCESS_PASSWORD: '', ALLOW_PASSWORDLESS_LAN: 'false', TRUSTED_PROXIES: '', ALLOWED_ORIGINS: '', ICE_SERVERS: '[]', MAX_CLIENTS: '256', MAX_CONNECTIONS_PER_IP: '16', MAX_ROOM_PEERS: '32', ROOM_IDLE_MINUTES: '30', ...settings },
+    env: { ...process.env, HOST: '127.0.0.1', PORT: String(port), MODE: 'room', DEBUG: 'false', MEMORY_LIMIT_MB: '', ACCESS_PASSWORD: '', ALLOW_PASSWORDLESS_LAN: 'false', TRUSTED_PROXIES: '', ALLOWED_ORIGINS: '', ICE_SERVERS: '[]', MAX_CLIENTS: '256', MAX_CONNECTIONS_PER_IP: '16', MAX_ROOM_PEERS: '32', ROOM_IDLE_MINUTES: '30', ...settings },
     stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true
   });
   context.after(async () => {

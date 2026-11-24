@@ -12,6 +12,10 @@ test('frontend controls reference existing unique DOM IDs', async () => {
   assert.ok(html.includes('lang="zh-CN"'));
   assert.ok(!html.includes('https://'));
   assert.ok(html.indexOf('/config.js') < html.indexOf('/boot.js'));
+  assert.ok(html.indexOf('/config.js') < html.indexOf('/app.js'));
+  assert.ok(app.includes('getMemoryLimit(window.LAN_DROP_CONFIG)'));
+  assert.ok(app.includes('new TransferHistory(memoryLimit)'));
+  assert.ok(!html.includes('256 MB'));
   assert.ok(html.includes('id="connection-diagnostics" class="connection-diagnostics" hidden'));
   assert.ok(html.indexOf('class="workspace"') < html.indexOf('class="about-strip"'));
   assert.ok(!html.includes('class="hero"'));

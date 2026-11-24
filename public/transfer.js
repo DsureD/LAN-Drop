@@ -1,4 +1,4 @@
-import { CHUNK_SIZE, MAX_FILES, MEMORY_LIMIT, safeFilename, validateOffer } from './protocol.js?v=security-1';
+import { CHUNK_SIZE, MAX_FILES, MEMORY_LIMIT, safeFilename, validateOffer } from './protocol.js?v=memory-config-1';
 
 const WINDOW_SIZE = 256 * 1024;
 const BUFFER_LIMIT = 512 * 1024;
@@ -16,8 +16,8 @@ function makeId() {
 }
 
 export class TransferEngine {
-  constructor({ signal, onTransfer, onOffer, onPeerState, onError, memoryAvailable }) {
-    Object.assign(this, { signal, onTransfer, onOffer, onPeerState, onError, memoryAvailable });
+  constructor({ signal, onTransfer, onOffer, onPeerState, onError, memoryAvailable, memoryLimit = MEMORY_LIMIT }) {
+    Object.assign(this, { signal, onTransfer, onOffer, onPeerState, onError, memoryAvailable, memoryLimit });
     this.links = new Map();
     this.peers = new Set();
     this.active = null;
@@ -169,7 +169,7 @@ export class TransferEngine {
   async accept(id, directory = null, key = null) {
     const record = this.active;
     if (!record || record.id !== id || (key && record.key !== key) || record.direction !== 'receive' || record.status !== 'waiting') return;
-    if (!directory && record.total > Math.min(MEMORY_LIMIT, this.memoryAvailable())) throw new Error('内存接收空间不足，请保存到文件夹，或清空已接收记录。');
+    if (!directory && record.total > Math.min(this.memoryLimit, this.memoryAvailable())) throw new Error('内存接收空间不足，请保存到文件夹，或清空已接收记录。');
     record.directory = directory;
     record.status = 'running';
     record.started = performance.now();

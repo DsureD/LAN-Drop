@@ -11,7 +11,7 @@
   <script src="/config.js?v=security-1"></script>
   <script src="/boot.js?v=security-1"></script>
   <script src="/vendor/qrcode.js" defer></script>
-  <script type="module" src="/app.js?v=security-1"></script>
+  <script type="module" src="/app.js?v=memory-config-1"></script>
 </head>
 <body>
   <svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -73,7 +73,7 @@
   <dialog id="invite-dialog" class="modal"><h2>邀请另一台设备。</h2><p class="muted">当前环境无法自动复制，请手动复制下方链接。</p><input id="invite-link" class="full-input" readonly aria-label="邀请链接"><button class="button primary wide" data-close="invite-dialog">完成</button></dialog>
   <dialog id="rename-dialog" class="modal"><h2>给这台设备起个名字。</h2><p class="muted">让另一台设备一眼就认出你。</p><form id="rename-form"><label for="name-input" class="small-label">设备名称</label><input id="name-input" class="full-input" maxlength="32" required autocomplete="off"><div class="modal-actions"><button type="button" class="button secondary" data-close="rename-dialog">取消</button><button class="button primary" type="submit">保存名称</button></div></form></dialog>
   <dialog id="password-dialog" class="modal"><h2>这是一个私人站点。</h2><p id="password-description" class="muted">请输入管理员设置的访问密码。</p><form id="password-form"><label for="password-input" class="small-label">访问密码</label><input id="password-input" class="full-input" type="password" maxlength="256" autocomplete="current-password" required><button class="button primary wide" type="submit">连接 LAN Drop<svg class="icon"><use href="#icon-arrow"/></svg></button></form></dialog>
-  <dialog id="help-dialog" class="modal help-modal"><div class="panel-heading"><h2>如何分享文件</h2><button class="icon-button" data-close="help-dialog" aria-label="关闭帮助"><svg class="icon"><use href="#icon-close"/></svg></button></div><ol class="help-steps"><li><strong>打开同一个网站</strong><p>局域网模式会自动显示同一大厅的设备；房间模式需要先创建或加入同一个房间。</p></li><li><strong>点击目标设备</strong><p>选择要发送的文件，或将文件拖到设备卡片上。</p></li><li><strong>对方确认接收</strong><p>普通接收完成后，点击传输记录中的文件名保存。支持文件夹接收的浏览器可以直接写入磁盘。</p></li></ol><div class="notice">普通接收的文件总大小上限为 256 MB，手机建议更小。请保持双方网页在前台，避免锁屏。</div><p class="muted">局域网模式显示所有有权访问同一大厅的设备，并非扫描 Wi-Fi。公网开放时请设置访问控制。无法直连时，请检查网络隔离、防火墙或 STUN/TURN 配置。</p><p class="modal-note">不支持断点续传；刷新、离开房间或断线后，需要重新发送。只接收可信设备的文件。</p></dialog>
+  <dialog id="help-dialog" class="modal help-modal"><div class="panel-heading"><h2>如何分享文件</h2><button class="icon-button" data-close="help-dialog" aria-label="关闭帮助"><svg class="icon"><use href="#icon-close"/></svg></button></div><ol class="help-steps"><li><strong>打开同一个网站</strong><p>局域网模式会自动显示同一大厅的设备；房间模式需要先创建或加入同一个房间。</p></li><li><strong>点击目标设备</strong><p>选择要发送的文件，或将文件拖到设备卡片上。</p></li><li><strong>对方确认接收</strong><p>普通接收完成后，点击传输记录中的文件名保存。支持文件夹接收的浏览器可以直接写入磁盘。</p></li></ol><div id="memory-receive-limit" class="notice">普通接收使用管理员配置的总容量预算，手机建议使用较小文件。直接保存到文件夹不受此预算限制。请保持双方网页在前台，避免锁屏。</div><p class="muted">局域网模式显示所有有权访问同一大厅的设备，并非扫描 Wi-Fi。公网开放时请设置访问控制。无法直连时，请检查网络隔离、防火墙或 STUN/TURN 配置。</p><p class="modal-note">不支持断点续传；刷新、离开房间或断线后，需要重新发送。只接收可信设备的文件。</p></dialog>
   <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
   <noscript><div class="notice shell">LAN Drop 需要启用 JavaScript 才能建立设备连接。</div></noscript>
 </body>

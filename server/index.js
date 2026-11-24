@@ -19,6 +19,9 @@ if (mode === 'lan' && !accessPassword && passwordlessLanSetting !== 'true') thro
 const debugSetting = (process.env.DEBUG || 'false').toLowerCase();
 if (!['true', 'false'].includes(debugSetting)) throw new Error('DEBUG must be true or false');
 const debug = debugSetting === 'true';
+const memoryLimitMb = Number(process.env.MEMORY_LIMIT_MB || 512);
+const memoryLimitBytes = memoryLimitMb * 1024 * 1024;
+if (!Number.isSafeInteger(memoryLimitMb) || memoryLimitMb <= 0 || !Number.isSafeInteger(memoryLimitBytes)) throw new Error('MEMORY_LIMIT_MB must be a positive integer with a safe byte count');
 const maxClients = Number(process.env.MAX_CLIENTS || 256);
 const maxConnectionsPerIp = Number(process.env.MAX_CONNECTIONS_PER_IP || 16);
 const trustedProxies = new Set((process.env.TRUSTED_PROXIES || '').split(',').map(value => value.trim()).filter(Boolean).map(value => {
@@ -66,7 +69,7 @@ const server = http.createServer(async (request, response) => {
   }
   if (pathname === '/config.js') {
     response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
-    return response.end(request.method === 'HEAD' ? undefined : `window.LAN_DROP_CONFIG = ${JSON.stringify({ debug })};`);
+    return response.end(request.method === 'HEAD' ? undefined : `window.LAN_DROP_CONFIG = ${JSON.stringify({ debug, memoryLimitBytes })};`);
   }
   const vendor = pathname === '/vendor/qrcode.js';
   const filename = vendor ? fileURLToPath(new URL('../node_modules/qrcode-generator/qrcode.js', import.meta.url)) : path.resolve(publicRoot, '.' + (pathname === '/' ? '/index.html' : pathname));

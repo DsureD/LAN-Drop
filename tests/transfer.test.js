@@ -13,7 +13,7 @@ async function until(predicate, timeout = 3000) {
   }
 }
 
-function pair({ accept = true, memory = MEMORY_LIMIT, directory = null } = {}) {
+function pair({ accept = true, memoryLimit = MEMORY_LIMIT, memory = memoryLimit, directory = null } = {}) {
   const sent = new Map();
   const received = new Map();
   let incoming;
@@ -23,7 +23,7 @@ function pair({ accept = true, memory = MEMORY_LIMIT, directory = null } = {}) {
   const receiver = new TransferEngine({ signal: noop, onTransfer: record => received.set(record.id, record), onOffer: offer => {
     incoming = offer;
     if (accept) queueMicrotask(() => receiver.accept(offer.id, directory).catch(noop));
-  }, onPeerState: noop, onError: noop, memoryAvailable: () => memory });
+  }, onPeerState: noop, onError: noop, memoryAvailable: () => memory, memoryLimit });
   sender.id = 'sender';
   receiver.id = 'receiver';
   sender.peers.add('receiver');
@@ -96,6 +96,34 @@ test('insufficient receiver memory refuses acceptance without receiving bytes', 
   await assert.rejects(fixture.receiver.accept(fixture.incoming().id), /空间不足/);
   assert.equal(fixture.sender.active.transferred, 0);
   fixture.receiver.decline(fixture.incoming().id);
+});
+
+test('configured memory budgets allow their exact boundary and reject excess bytes', async context => {
+  for (const limit of [128 * 1024 * 1024, MEMORY_LIMIT, 1024 * 1024 * 1024]) {
+    const fixture = pair({ accept: false, memoryLimit: limit, memory: limit + 1 });
+    context.after(() => fixture.cleanup());
+    const receiveOffer = (id, size) => fixture.receiver.handleData(fixture.receiverLink, JSON.stringify({ type: 'offer', id, files: [{ name: 'large.bin', size }] }));
+    await receiveOffer('over-limit', limit + 1);
+    await assert.rejects(fixture.receiver.accept('over-limit'), /空间不足/);
+    assert.equal(fixture.receiver.active.status, 'waiting');
+    assert.equal(fixture.receiver.active.transferred, 0);
+    fixture.receiver.decline('over-limit');
+    await receiveOffer('at-limit', limit);
+    await fixture.receiver.accept('at-limit');
+    assert.equal(fixture.receiver.active.status, 'running');
+    assert.equal(fixture.receiver.active.total, limit);
+  }
+});
+
+test('disk acceptance bypasses the memory budget even for larger offers', async context => {
+  const fixture = pair({ accept: false, memory: 0 });
+  context.after(() => fixture.cleanup());
+  const id = 'large-disk-file';
+  const directory = {};
+  await fixture.receiver.handleData(fixture.receiverLink, JSON.stringify({ type: 'offer', id, files: [{ name: 'large.bin', size: MEMORY_LIMIT + 1 }] }));
+  await fixture.receiver.accept(id, directory);
+  assert.equal(fixture.receiver.active.status, 'running');
+  assert.equal(fixture.receiver.active.directory, directory);
 });
 
 test('disk receiving streams data and avoids overwriting existing names', async context => {

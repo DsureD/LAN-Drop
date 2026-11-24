@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CHUNK_SIZE, MEMORY_LIMIT, MAX_FILES, formatBytes, safeFilename, validateOffer, deviceCode } from '../public/protocol.js';
+import { CHUNK_SIZE, MEMORY_LIMIT, MAX_FILES, getMemoryLimit, formatBytes, safeFilename, validateOffer, deviceCode } from '../public/protocol.js';
 
 const offer = files => ({ type: 'offer', id: 'transfer-123', files });
 
@@ -25,9 +25,18 @@ test('filenames cannot escape the selected directory', () => {
 
 test('protocol has conservative chunks and an explicit memory cap', () => {
   assert.equal(CHUNK_SIZE, 16384);
-  assert.equal(MEMORY_LIMIT, 268435456);
+  assert.equal(MEMORY_LIMIT, 536870912);
   assert.equal(formatBytes(1024), '1.00 KB');
   assert.equal(formatBytes(NaN), '0 B');
+});
+
+test('memory budget uses valid server configuration and defaults to 512 MiB', () => {
+  for (const config of [undefined, null, {}, { memoryLimitBytes: 0 }, { memoryLimitBytes: -1 }, { memoryLimitBytes: 1.5 }, { memoryLimitBytes: '1024' }, { memoryLimitBytes: Infinity }, { memoryLimitBytes: Number.MAX_SAFE_INTEGER + 1 }]) {
+    assert.equal(getMemoryLimit(config), MEMORY_LIMIT);
+  }
+  for (const limit of [128 * 1024 * 1024, 1024 * 1024 * 1024]) {
+    assert.equal(getMemoryLimit({ memoryLimitBytes: limit }), limit);
+  }
 });
 
 test('filename normalization prevents direction-based extension disguises and trailing dots after truncation', () => {

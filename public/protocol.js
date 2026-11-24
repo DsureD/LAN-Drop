@@ -1,6 +1,11 @@
-export const MEMORY_LIMIT = 256 * 1024 * 1024;
+export const MEMORY_LIMIT = 512 * 1024 * 1024;
 export const CHUNK_SIZE = 16 * 1024;
 export const MAX_FILES = 100;
+
+export function getMemoryLimit(config) {
+  const limit = config?.memoryLimitBytes;
+  return Number.isSafeInteger(limit) && limit > 0 ? limit : MEMORY_LIMIT;
+}
 
 export function safeFilename(value) {
   const name = String(value || '').normalize('NFC').split(/[\\/]/).pop().replace(/[\u0000-\u001f\u007f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069<>:"|?*]/g, '_').slice(0, 180).replace(/[.\s]+$/g, '');

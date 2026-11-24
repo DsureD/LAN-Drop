@@ -1,5 +1,5 @@
-import { MEMORY_LIMIT, formatBytes, deviceCode } from './protocol.js?v=security-1';
-import { TransferEngine } from './transfer.js?v=security-1';
+import { getMemoryLimit, formatBytes, deviceCode } from './protocol.js?v=memory-config-1';
+import { TransferEngine } from './transfer.js?v=memory-config-1';
 import { installDialogs } from './dialogs.js?v=security-1';
 import { TransferHistory } from './history.js?v=security-1';
 
@@ -14,7 +14,9 @@ installDialogs(document);
 const element = id => document.getElementById(id);
 const finishedStatuses = new Set(['completed', 'failed', 'cancelled', 'rejected']);
 const statusLabels = { connecting: '正在建立直连', waiting: '等待接收确认', running: '传输中', completed: '已完成', failed: '未完成', cancelled: '已取消', rejected: '已拒绝' };
-const history = new TransferHistory(MEMORY_LIMIT);
+const memoryLimit = getMemoryLimit(window.LAN_DROP_CONFIG);
+const history = new TransferHistory(memoryLimit);
+element('memory-receive-limit').textContent = `普通接收的总容量预算为 ${formatBytes(memoryLimit)}，包含本次接收与历史记录中保留的文件；手机建议更小。直接保存到文件夹不受此预算限制。请保持双方网页在前台，避免锁屏。`;
 const peerStates = new Map();
 let peers = [];
 let socket;
@@ -119,7 +121,8 @@ const engine = new TransferEngine({
   onOffer: showOffer,
   onPeerState: (peerId, state) => { peerStates.set(peerId, state); renderPeers(); },
   onError: toast,
-  memoryAvailable
+  memoryAvailable,
+  memoryLimit
 });
 
 function connect() {
@@ -353,7 +356,7 @@ function showOffer(offer) {
   element('accept-memory').disabled = offer.total > available;
   element('accept-memory').textContent = offer.total > available ? '超出内存接收上限' : '接收文件';
   element('accept-disk').hidden = !diskSupported;
-  element('receive-limit').textContent = offer.total > available ? `普通接收可用空间：${formatBytes(available)}。${diskSupported ? '请直接保存到文件夹。' : '请先保存并清空旧记录，或让对方拆分文件；大文件可使用支持文件夹写入的桌面 Chrome/Edge。'}` : '普通接收完成后，请在传输记录中点击文件保存。手机建议使用较小文件。';
+  element('receive-limit').textContent = `普通接收总预算：${formatBytes(memoryLimit)}，可用空间：${formatBytes(available)}。${offer.total > available ? (diskSupported ? '请直接保存到文件夹。' : '请先保存并清空旧记录，或让对方拆分文件；大文件可使用支持文件夹写入的桌面 Chrome/Edge。') : '普通接收完成后，请在传输记录中点击文件保存。手机建议使用较小文件。'}`;
   element('receive-dialog').showModal();
 }
 
